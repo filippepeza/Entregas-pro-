@@ -1,137 +1,15 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#174d78"><title>Entregas PRO</title><style>*{box-sizing:border-box}body{margin:0;background:#f1f5f8;font-family:Arial,sans-serif;color:#17212b}header{background:#174d78;color:#fff;padding:22px 5%}h1{margin:0;font-size:28px}.wrap{max-width:680px;margin:auto;padding:14px}.nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.nav button{min-width:max-content}.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card,.panel{border-radius:18px;padding:17px}.card{color:#fff;min-height:104px}.card small{font-size:16px}.card strong{font-size:25px;display:block;margin-top:10px}.panel{background:#fff;margin:14px 0}.g{background:#198f53}.b{background:#1485cc}.r{background:#cd4141}.o{background:#e78900}.p{background:#7445af}.y{background:#b47b00}button,input,select,textarea{width:100%;padding:13px;border-radius:11px;border:1px solid #cbd5de;font-size:16px;margin:5px 0}button{background:#174d78;color:#fff;border:0;font-weight:700}.secondary{background:#687681}.danger{background:#c63e3e}.success{background:#168a4a}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.actions{display:flex;gap:7px}.actions button{padding:9px;font-size:13px}.hide{display:none}.item{border:1px solid #dde4ea;border-radius:13px;padding:12px;margin:9px 0}.status{font-weight:bold}.open{color:#a66b00}.done{color:#168a4a}.muted{color:#65717c;font-size:13px}.empty{color:#65717c;text-align:center;padding:15px}:focus{outline:3px solid #ffbf47;outline-offset:2px}@media(max-width:430px){.wrap{padding:10px}.grid2{grid-template-columns:1fr}.card strong{font-size:22px}}</style></head><body><header><h1>🚚 Entregas PRO</h1><div>Meu controle na estrada</div></header><main class="wrap"><nav class="nav"><button onclick="show('home')">Início</button><button onclick="newRoute()">+ Rota</button><button onclick="show('fuel')">⛽ Combustível</button><button onclick="show('expense')">💸 Despesa</button></nav>
-
-<section id="home"><div class="cards"><div class="card g"><small>Receita confirmada</small><strong id="confirmed">R$ 0,00</strong></div><div class="card y"><small>Receita prevista</small><strong id="forecast">R$ 0,00</strong></div><div class="card b"><small>Resultado').value,
-tipo:$('fuelType').value,
-litros:l,
-valor:num('fuelValue'),
-km:k,
-kml:l&&k?k/l:0
-};
-
-if(!f.data||!l){
-alert('Informe a data e os litros.');
-return;
-}
-
-if(i===''){
-data.combustivel.push(f);
-}else{
-data.combustivel[+i]=f;
-}
-
-$('fuelIndex').value='';
-persist();
-show('home');
-}
-
-function editFuel(i){
-let f=data.combustivel[i];
-
-$('fuelIndex').value=i;
-$('fuelDate').value=f.data;
-$('fuelType').value=f.tipo||'Etanol';
-$('liters').value=f.litros||'';
-$('fuelValue').value=f.valor||'';
-$('fuelKm').value=f.km||'';
-
-calcConsumption();
-show('fuel');
-}
-
-function deleteFuel(i){
-if(confirm('Excluir este abastecimento?')){
-data.combustivel.splice(i,1);
-persist();
-}
-}
-
-function saveExpense(){
-let e={
-data:$('expenseDate').value,
-categoria:$('category').value,
-valor:num('expenseValue'),
-observacao:$('expenseNote').value
-};
-
-if(!e.data||!e.valor){
-alert('Informe data e valor.');
-return;
-}
-
-data.despesas.push(e);
-persist();
-show('home');
-}
-
-function render(){
-let done=data.rotas.filter(r=>r.status==='done');
-let open=data.rotas.filter(r=>r.status!=='done');
-
-let confirmed=done.reduce((a,r)=>a+Number(r.valor||0),0);
-let forecast=open.reduce((a,r)=>a+Number(r.valor||0),0);
-let fuel=data.combustivel.reduce((a,f)=>a+Number(f.valor||0),0);
-let expenses=data.despesas.reduce((a,e)=>a+Number(e.valor||0),0);
-let cost=fuel+expenses;
-let km=done.reduce((a,r)=>a+Number(r.km||0),0);
-let del=done.reduce((a,r)=>a+Number(r.entregas||0),0);
-
-$('confirmed').textContent=money(confirmed);
-$('forecast').textContent=money(forecast);
-$('result').textContent=money(confirmed-cost);
-$('cost').textContent=money(cost);
-$('totalKm').textContent=km.toLocaleString('pt-BR');
-$('deliveries').textContent=del.toLocaleString('pt-BR');
-
-$('routeList').innerHTML=data.rotas.length
-?data.rotas.map((r,i)=>`
-<article class="item">
-<div class="status ${r.status==='done'?'done':'open'}">
-${r.status==='done'?'🟢 Finalizada':'🟡 Em andamento'}
-</div>
-<h3>${esc(r.destino)}</h3>
-<div class="muted">
-${esc(r.data)} • ${esc(r.transportadora)} • ${money(r.valor)}
-</div>
-<p>${r.entregas||0} entrega(s) • ${r.km||0} km</p>
-<div class="actions">
-<button onclick="editRoute(${i})">Editar</button>
-${r.status!=='done'
-?`<button class="success" onclick="editRoute(${i},true)">Finalizar</button>`
-:''}
-<button class="danger" onclick="deleteRoute(${i})">Excluir</button>
-</div>
-</article>
-`).join('')
-:'<div class="empty">Nenhuma rota cadastrada.</div>';
-
-let valid=data.combustivel.filter(f=>Number(f.kml)>0);
-
-let avg=valid.length
-?valid.reduce((a,f)=>a+Number(f.kml),0)/valid.length
-:0;
-
-$('avgConsumption').textContent=avg.toFixed(2)+' km/L';
-
-$('fuelList').innerHTML=data.combustivel.length
-?data.combustivel.map((f,i)=>`
-<article class="item">
-<b>${esc(f.tipo||'Combustível')}</b>
-• ${Number(f.litros||0).toLocaleString('pt-BR')} L
-• ${money(f.valor)}
-<div>
-${Number(f.km||0).toLocaleString('pt-BR')} km
-• <b>${Number(f.kml||0).toFixed(2)} km/L</b>
-</div>
-<div class="actions">
-<button onclick="editFuel(${i})">Editar</button>
-<button class="danger" onclick="deleteFuel(${i})">Excluir</button>
-</div>
-</article>
-`).join('')
-:'<div class="empty">Nenhum abastecimento cadastrado.</div>';
-}
-
-$('fuelDate').value=today();
-$('expenseDate').value=today();
-render();
-</script></body></html>
+<section id="home"><div class="cards"><div class="card g"><small>Receita confirmada</small><strong id="confirmed">R$ 0,00</strong></div><div class="card y"><small>Receita prevista</small><strong id="forecast">R$ 0,00</strong></div><div class="card b"><small>Resultado</small><strong id="result">R$ 0,00</strong></div><div class="card r"><small>Custos</small><strong id="cost">R$ 0,00</strong></div><div class="card o"><small>KM rodados</small><strong id="totalKm">0</strong></div><div class="card p"><small>Entregas</small><strong id="deliveries">0</strong></div></div><div class="panel"><h2>Rotas</h2><div id="routeList"></div></div><div class="panel"><h2>Consumo do veículo</h2><p><b id="avgConsumption">0 km/L</b> de média nos abastecimentos com KM informado.</p><div id="fuelList"></div></div></section>
+<section id="route" class="hide"><div class="panel"><h2 id="routeTitle">📦 Nova rota</h2><input id="routeIndex" type="hidden"><label>Data<input id="routeDate" type="date"></label><label>Operação / transportadora<select id="carrier"><option>Shopee</option><option>Mercado Livre</option><option>Outra</option></select></label><label>Destino / região<input id="destination" placeholder="Ex.: Jardim Atlântico / Florianópolis"></label><div class="grid2"><label>Total de entregas<input id="routeDeliveries" type="number" min="0" placeholder="Pode deixar vazio"></label><label>KM rodados<input id="routeKm" type="number" min="0" step=".1" placeholder="Preencha ao finalizar"></label></div><label>Valor da rota<input id="routeValue" type="number" min="0" step=".01" placeholder="Previsto ou confirmado"></label><label>Status<select id="routeStatus"><option value="open">Em andamento</option><option value="done">Finalizada</option></select></label><label>Observação<textarea id="routeNote" rows="2"></textarea></label><button onclick="saveRoute()">Salvar rota</button><button class="secondary" onclick="show('home')">Cancelar</button></div></section>
+<section id="fuel" class="hide"><div class="panel"><h2>⛽ Abastecimento e consumo</h2><input id="fuelIndex" type="hidden"><label>Data<input id="fuelDate" type="date"></label><label>Combustível<select id="fuelType"><option>Etanol</option><option>Gasolina</option><option>Diesel</option></select></label><div class="grid2"><label>Litros abastecidos<input id="liters" type="number" min="0" step=".01" oninput="calcConsumption()"></label><label>Valor total<input id="fuelValue" type="number" min="0" step=".01"></label></div><label>KM rodados com este abastecimento<input id="fuelKm" type="number" min="0" step=".1" oninput="calcConsumption()" placeholder="Preencha quando souber"></label><p class="panel">Consumo calculado: <b id="calcKml">0 km/L</b></p><button onclick="saveFuel()">Salvar abastecimento</button><button class="secondary" onclick="show('home')">Cancelar</button></div></section>
+<section id="expense" class="hide"><div class="panel"><h2>💸 Registrar gasto</h2><label>Data<input id="expenseDate" type="date"></label><label>Categoria<select id="category"><option>Alimentação</option><option>Pedágio</option><option>Estacionamento</option><option>Manutenção</option><option>Lavagem</option><option>Outros</option></select></label><label>Valor<input id="expenseValue" type="number" min="0" step=".01"></label><label>Observação<input id="expenseNote"></label><button onclick="saveExpense()">Salvar gasto</button><button class="secondary" onclick="show('home')">Cancelar</button></div></section></main><script>
+const KEY='entregasFelipe';let data=JSON.parse(localStorage.getItem(KEY)||'null')||{rotas:[],combustivel:[],despesas:[]};data.rotas=data.rotas||[];data.combustivel=data.combustivel||[];data.despesas=data.despesas||[];data.rotas=data.rotas.map(r=>({...r,status:r.status||((Number(r.km)>0||Number(r.entregas)>0)?'done':'open')}));
+const $=id=>document.getElementById(id),num=id=>Number($(id).value||0),money=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),today=()=>new Date().toISOString().slice(0,10),esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function persist(){localStorage.setItem(KEY,JSON.stringify(data));render()}function show(id){['home','route','fuel','expense'].forEach(x=>$(x).classList.toggle('hide',x!==id));if(id==='home')render()}function newRoute(){$('routeIndex').value='';$('routeTitle').textContent='📦 Nova rota';$('routeDate').value=today();$('carrier').value='Shopee';$('destination').value='';$('routeDeliveries').value='';$('routeKm').value='';$('routeValue').value='';$('routeStatus').value='open';$('routeNote').value='';show('route')}
+function saveRoute(){let i=$('routeIndex').value,r={data:$('routeDate').value,transportadora:$('carrier').value,destino:$('destination').value,entregas:num('routeDeliveries'),km:num('routeKm'),valor:num('routeValue'),status:$('routeStatus').value,observacao:$('routeNote').value};if(!r.data||!r.destino){alert('Informe a data e o destino.');return}i===''?data.rotas.push(r):data.rotas[+i]=r;persist();show('home')}
+function editRoute(i,finish=false){let r=data.rotas[i];$('routeIndex').value=i;$('routeTitle').textContent=finish?'✅ Finalizar rota':'✏️ Editar rota';$('routeDate').value=r.data;$('carrier').value=r.transportadora||'Shopee';$('destination').value=r.destino||'';$('routeDeliveries').value=r.entregas||'';$('routeKm').value=r.km||'';$('routeValue').value=r.valor||'';$('routeStatus').value=finish?'done':(r.status||'open');$('routeNote').value=r.observacao||'';show('route')}
+function deleteRoute(i){if(confirm('Excluir esta rota?')){data.rotas.splice(i,1);persist()}}
+function calcConsumption(){let l=num('liters'),k=num('fuelKm');$('calcKml').textContent=(l&&k?(k/l).toFixed(2):'0')+' km/L'}function saveFuel(){let i=$('fuelIndex').value,l=num('liters'),k=num('fuelKm'),f={data:$('fuelDate').value,tipo:$('fuelType').value,litros:l,valor:num('fuelValue'),km:k,kml:l&&k?k/l:0};if(!f.data||!l){alert('Informe a data e os litros.');return}i===''?data.combustivel.push(f):data.combustivel[+i]=f;$('fuelIndex').value='';persist();show('home')}function editFuel(i){let f=data.combustivel[i];$('fuelIndex').value=i;$('fuelDate').value=f.data;$('fuelType').value=f.tipo||'Etanol';$('liters').value=f.litros||'';$('fuelValue').value=f.valor||'';$('fuelKm').value=f.km||'';calcConsumption();show('fuel')}function deleteFuel(i){if(confirm('Excluir este abastecimento?')){data.combustivel.splice(i,1);persist()}}
+function saveExpense(){let e={data:$('expenseDate').value,categoria:$('category').value,valor:num('expenseValue'),observacao:$('expenseNote').value};if(!e.data||!e.valor){alert('Informe data e valor.');return}data.despesas.push(e);persist();show('home')}
+function render(){let done=data.rotas.filter(r=>r.status==='done'),open=data.rotas.filter(r=>r.status!=='done'),confirmed=done.reduce((a,r)=>a+Number(r.valor||0),0),forecast=open.reduce((a,r)=>a+Number(r.valor||0),0),fuel=data.combustivel.reduce((a,f)=>a+Number(f.valor||0),0),expenses=data.despesas.reduce((a,e)=>a+Number(e.valor||0),0),cost=fuel+expenses,km=done.reduce((a,r)=>a+Number(r.km||0),0),del=done.reduce((a,r)=>a+Number(r.entregas||0),0);$('confirmed').textContent=money(confirmed);$('forecast').textContent=money(forecast);$('result').textContent=money(confirmed-cost);$('cost').textContent=money(cost);$('totalKm').textContent=km.toLocaleString('pt-BR');$('deliveries').textContent=del.toLocaleString('pt-BR');$('routeList').innerHTML=data.rotas.length?data.rotas.map((r,i)=>`<article class="item"><div class="status ${r.status==='done'?'done':'open'}">${r.status==='done'?'🟢 Finalizada':'🟡 Em andamento'}</div><h3>${esc(r.destino)}</h3><div class="muted">${esc(r.data)} • ${esc(r.transportadora)} • ${money(r.valor)}</div><p>${r.entregas||0} entrega(s) • ${r.km||0} km</p><div class="actions"><button onclick="editRoute(${i})">Editar</button>${r.status!=='done'?`<button class="success" onclick="editRoute(${i},true)">Finalizar</button>`:''}<button class="danger" onclick="deleteRoute(${i})">Excluir</button></div></article>`).join(''):'<div class="empty">Nenhuma rota cadastrada.</div>';let valid=data.combustivel.filter(f=>Number(f.kml)>0),avg=valid.length?valid.reduce((a,f)=>a+Number(f.kml),0)/valid.length:0;$('avgConsumption').textContent=avg.toFixed(2)+' km/L';$('fuelList').innerHTML=data.combustivel.length?data.combustivel.map((f,i)=>`<article class="item"><b>${esc(f.tipo||'Combustível')}</b> • ${Number(f.litros||0).toLocaleString('pt-BR')} L • ${money(f.valor)}<div>${Number(f.km||0).toLocaleString('pt-BR')} km • <b>${Number(f.kml||0).toFixed(2)} km/L</b></div><div class="actions"><button onclick="editFuel(${i})">Editar</button><button class="danger" onclick="deleteFuel(${i})">Excluir</button></div></article>`).join(''):'<div class="empty">Nenhum abastecimento cadastrado.</div>'}
+$('fuelDate').value=today();$('expenseDate').value=today();render();</script></body></html>
